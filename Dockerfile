@@ -10,7 +10,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o sniper cmd/web/*
+RUN go build -o sniper ./cmd/web/
 
 FROM alpine:3.19 AS production
 

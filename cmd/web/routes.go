@@ -42,18 +42,5 @@ func (app *application) routes() http.Handler {
 		})
 	})
 
-	r.Route("/api/v1", func(r chi.Router) {
-		r.Get("/healthcheck", app.healthCheckAPI)
-		r.Get("/snippets", app.listSnippetsAPI)
-		r.Get("/snippets/{id}", app.getSnippetAPI)
-		r.Get("/tags", app.listTagsAPI)
-		r.Get("/users/{id}", app.getUserAPI)
-
-		r.Group(func(r chi.Router) {
-			r.Use(app.requireAuthenticatedUser)
-			r.Post("/snippets", app.createSnippetAPI)
-		})
-	})
-
 	return r
 }
