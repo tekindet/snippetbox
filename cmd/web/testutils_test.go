@@ -2,7 +2,7 @@ package main
 
 import (
 	"html"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -16,10 +16,10 @@ import (
 	"github.com/golangcollege/sessions"
 )
 
-var csrfTokenRX = regexp.MustCompile(`<input type="hidden" name="csrf_token" value="{{.CSRFToken}}">`)
+var csrfTokenRX = regexp.MustCompile(`<input type="hidden" name="csrf_token" value="(.+?)"`)
 
 func extractCSRFToken(t *testing.T, body []byte) string {
-	matches := csrfTokenRX.Find(body)
+	matches := csrfTokenRX.FindSubmatch(body)
 	if len(matches) < 2 {
 		t.Fatal("no csrf token found in body")
 	}
@@ -34,13 +34,13 @@ func newTestApplication(t *testing.T) *application {
 
 	session := sessions.New([]byte("s6Ndh+pPbnzHbS*+9Pk8qGWhTzbpa@ge"))
 	session.Lifetime = 12 * time.Hour
-	session.Secure = true
+	session.Secure = false
 
 	var snippetModel = &mock.SnippetModel{}
 
 	return &application{
-		infoLogger:    log.New(ioutil.Discard, "", 0),
-		errorLogger:   log.New(ioutil.Discard, "", 0),
+		infoLogger:    log.New(io.Discard, "", 0),
+		errorLogger:   log.New(io.Discard, "", 0),
 		session:       session,
 		snippet:       snippetModel,
 		templateCache: templateCache,
@@ -74,7 +74,7 @@ func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, []byt
 		t.Fatal(err)
 	}
 	defer rs.Body.Close()
-	body, err := ioutil.ReadAll(rs.Body)
+	body, err := io.ReadAll(rs.Body)
 	if err != nil {
 		t.Fatal(err)
 	}

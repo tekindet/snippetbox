@@ -1,41 +1,44 @@
 package main
 
 import (
-	"github.com/bmizerany/pat"
-	"github.com/justinas/alice"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func (app *application) routes() http.Handler {
+	r := chi.NewRouter()
 
-	// standard middleware
-	standardMiddleware := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
-	// dynamic middleware
-	dynamicMiddleware := alice.New(app.session.Enable, noSurf, app.authenticate)
-
-	mux := pat.New()
-	mux.Get("/", dynamicMiddleware.ThenFunc(app.home))
-	// protect the create snippets routes
-	mux.Get("/snippets/create", dynamicMiddleware.Append(app.requireAuthenticatedUser).ThenFunc(app.createSnippetForm))
-	mux.Post("/snippets/create", dynamicMiddleware.Append(app.requireAuthenticatedUser).ThenFunc(app.createSnippet))
-
-	mux.Get("/snippets/:id", dynamicMiddleware.ThenFunc(app.showSnippet))
-
-	// Add the authentication routes
-	mux.Get("/user/signup", dynamicMiddleware.ThenFunc(app.signupUserForm))
-	mux.Post("/user/signup", dynamicMiddleware.ThenFunc(app.signupUser))
-	mux.Get("/user/login", dynamicMiddleware.ThenFunc(app.loginUserForm))
-	mux.Post("/user/login", dynamicMiddleware.ThenFunc(app.loginUser))
-
-	// protect logout route. No point of logging out a user that is not logged in
-	mux.Post("/user/logout", dynamicMiddleware.Append(app.requireAuthenticatedUser).ThenFunc(app.logoutUser))
-
-	mux.Get("/ping", http.HandlerFunc(ping))
+	r.Use(app.recoverPanic)
+	r.Use(app.logRequest)
+	r.Use(secureHeaders)
 
 	fileServer := http.FileServer(http.Dir(app.cfg.StaticDir))
+	r.Handle("/static/*", http.StripPrefix("/static", fileServer))
 
-	// handle wildcard route
-	mux.Get("/static/", http.StripPrefix("/static", fileServer))
+	r.Get("/ping", ping)
 
-	return standardMiddleware.Then(mux)
+	r.Group(func(r chi.Router) {
+		r.Use(app.session.Enable)
+		r.Use(noSurf)
+		r.Use(app.authenticate)
+
+		r.Get("/", app.home)
+		r.Get("/snippets/{id}", app.showSnippet)
+
+		r.Get("/user/signup", app.signupUserForm)
+		r.Post("/user/signup", app.signupUser)
+		r.Get("/user/login", app.loginUserForm)
+		r.Post("/user/login", app.loginUser)
+
+		r.Group(func(r chi.Router) {
+			r.Use(app.requireAuthenticatedUser)
+
+			r.Get("/snippets/create", app.createSnippetForm)
+			r.Post("/snippets/create", app.createSnippet)
+			r.Post("/user/logout", app.logoutUser)
+		})
+	})
+
+	return r
 }

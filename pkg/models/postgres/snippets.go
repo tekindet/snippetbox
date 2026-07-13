@@ -25,7 +25,7 @@ func (s *SnippetModel) Insert(title, content, expires string) (int, error) {
 
 	err = s.DB.QueryRow(stmt, title, content, expiresAt).Scan(&id)
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 	// returns int64
 	return int(id), nil
@@ -54,7 +54,7 @@ func (s *SnippetModel) Get(id int) (*models.Snippet, error) {
 
 // Latest This will return the top 10 most recently created snippets
 func (s *SnippetModel) Latest() ([]*models.Snippet, error) {
-	stmt := `SELECT id,title,content,created,expires FROM snippets LIMIT 10`
+	stmt := `SELECT id,title,content,created,expires FROM snippets ORDER BY created DESC LIMIT 10`
 
 	rows, err := s.DB.Query(stmt)
 	if err != nil {

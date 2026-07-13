@@ -3,16 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/aitumik/snippetbox/pkg/models"
 	"github.com/justinas/nosurf"
-	"net/http"
 )
 
 func secureHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// add the headers here
 		w.Header().Set("X-Frame-Options", "deny")
-		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -23,7 +25,7 @@ func noSurf(next http.Handler) http.Handler {
 	csrfHandler.SetBaseCookie(http.Cookie{
 		HttpOnly: true,
 		Path:     "/",
-		Secure:   true,
+		Secure:   false,
 	})
 	return csrfHandler
 }
@@ -31,10 +33,9 @@ func noSurf(next http.Handler) http.Handler {
 func (app *application) requireAuthenticatedUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if app.authenticatedUser(r) == nil {
-			http.Redirect(w, r, "/user/login", 302)
+			http.Redirect(w, r, "/user/login", http.StatusFound)
 			return
 		}
-		// call the next handler in chain
 		next.ServeHTTP(w, r)
 	})
 }
@@ -56,7 +57,6 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 			app.serverError(w, err)
 			return
 		}
-		// add the user to the request context
 		ctx := context.WithValue(r.Context(), contextKeyUser, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -64,7 +64,6 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 
 func (app *application) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// log the requests here
 		app.infoLogger.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL)
 		next.ServeHTTP(w, r)
 	})

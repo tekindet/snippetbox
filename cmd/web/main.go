@@ -50,17 +50,13 @@ func main() {
 		errorLogger.Fatal(err)
 	}
 
-	flag.StringVar(&cfg.Addr, "addr", ":4000", "HTTP Network Address")
-	flag.StringVar(&cfg.StaticDir, "static-dir", "./ui/static", "Path to static assets")
-	flag.StringVar(&cfg.SecretKey, "secret", "s6Ndh+pPbnzHbS*+9Pk8qGWhTzbpa@ge", "Secret Key")
+	flag.StringVar(&cfg.Addr, "addr", cfg.Addr, "HTTP Network Address")
+	flag.StringVar(&cfg.StaticDir, "static-dir", cfg.StaticDir, "Path to static assets")
+	flag.StringVar(&cfg.SecretKey, "secret", cfg.SecretKey, "Secret Key")
 	flag.Parse()
 
-	cfg, err = pkg.NewConfig()
-	if err != nil {
-		errorLogger.Fatal(err)
-	}
-
 	dsn := cfg.DatabaseURI
+
 	conn, err := gorm.Open(psql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		errorLogger.Fatal(err)
@@ -84,14 +80,11 @@ func main() {
 	}
 	infoLogger.Print("Initializing the template cache")
 
-	// Create a new session manager using the `New` method passing the secret key
-	// as the parameter
-	session := sessions.New([]byte("s6Ndh+pPbnzHbS*+9Pk8qGWhTzbpa@ge"))
+	session := sessions.New([]byte(cfg.SecretKey))
 	session.Lifetime = 12 * time.Hour
-	session.Secure = true
+	session.Secure = false
 	session.SameSite = http.SameSiteStrictMode
 
-	// Add the templateCache to the application dependencies
 	app := &application{
 		errorLogger: errorLogger,
 		infoLogger:  infoLogger,
@@ -106,30 +99,22 @@ func main() {
 		},
 	}
 
-	// Do the auto migration
 	conn.AutoMigrate(&models.Snippet{})
 	conn.AutoMigrate(&models.User{})
 	infoLogger.Print("Migrating database models")
 
 	mux := app.routes()
 
-	//tlsConfig := &tls.Config{
-	//	PreferServerCipherSuites: true,
-	//	CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
-	//}
-
 	server := &http.Server{
-		Addr:     cfg.Addr,
-		ErrorLog: errorLogger,
-		Handler:  mux,
-		//TLSConfig:    tlsConfig,
+		Addr:         cfg.Addr,
+		ErrorLog:     errorLogger,
+		Handler:      mux,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
 	infoLogger.Printf("Server started at %s", cfg.Addr)
-	//err = server.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	err = server.ListenAndServe()
 	errorLogger.Fatal(err)
 }

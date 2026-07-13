@@ -9,7 +9,7 @@ import (
 )
 
 func TestUserModelGet(t *testing.T) {
-	if t.Short() {
+	if testing.Short() {
 		t.Skip("postgres: skipping integration tests")
 	}
 

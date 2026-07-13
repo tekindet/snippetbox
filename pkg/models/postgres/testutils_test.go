@@ -2,23 +2,33 @@ package postgres
 
 import (
 	"database/sql"
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
 func newTestDB(t *testing.T) (*sql.DB, func()) {
-	db, err := sql.Open("postgres", "dsn")
+	dsn := os.Getenv("TEST_DATABASE_URI")
+	if dsn == "" {
+		dsn = "postgres://snippetbox:snippetbox@localhost:5432/snippetbox_test?sslmode=disable"
+	}
+
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	script, err := ioutil.ReadFile("./testdata/setup.sql")
+	script, err := os.ReadFile("./testdata/setup.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = db.Exec(string(script))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	return db, func() {
-		script, err := ioutil.ReadFile("./testdata/teardown.sql")
+		script, err := os.ReadFile("./testdata/teardown.sql")
 		if err != nil {
 			t.Fatal(err)
 		}

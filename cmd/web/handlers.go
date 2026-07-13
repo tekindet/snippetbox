@@ -7,6 +7,7 @@ import (
 
 	"github.com/aitumik/snippetbox/pkg/forms"
 	"github.com/aitumik/snippetbox/pkg/models"
+	"github.com/go-chi/chi/v5"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +66,7 @@ func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id < 1 {
 		app.notFound(w)
 		return
@@ -121,6 +122,7 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 			Form: form,
 		}
 		app.render(w, r, "signup.page.tmpl", data)
+		return
 	}
 
 	app.session.Put(r, "flash", "Registration successful. Please login.")
@@ -164,7 +166,7 @@ func (app *application) loginUser(w http.ResponseWriter, r *http.Request) {
 func (app *application) logoutUser(w http.ResponseWriter, r *http.Request) {
 	app.session.Remove(r, "userID")
 	app.session.Put(r, "flash", "You have been logged out successfully")
-	http.Redirect(w, r, "/", 303)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func ping(w http.ResponseWriter, r *http.Request) {

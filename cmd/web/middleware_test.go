@@ -1,17 +1,15 @@
 package main
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestSecureHeaders(t *testing.T) {
-	// Initialize a new response recorder
 	rr := httptest.NewRecorder()
 
-	// Initialize a dummy request
 	r, err := http.NewRequest("GET", "/", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -30,18 +28,27 @@ func TestSecureHeaders(t *testing.T) {
 		t.Errorf("expected %q; got %q", "deny", frameOptions)
 	}
 
-	xssProtection := rs.Header.Get("X-XSS-Protection")
-	if xssProtection != "1; mode=block" {
-		t.Errorf("expected %q; got %q", "1; mode=block", xssProtection)
+	contentTypeOpts := rs.Header.Get("X-Content-Type-Options")
+	if contentTypeOpts != "nosniff" {
+		t.Errorf("expected %q; got %q", "nosniff", contentTypeOpts)
 	}
 
-	// assert that the response is 200 OK
+	referrerPolicy := rs.Header.Get("Referrer-Policy")
+	if referrerPolicy != "strict-origin-when-cross-origin" {
+		t.Errorf("expected %q; got %q", "strict-origin-when-cross-origin", referrerPolicy)
+	}
+
+	csp := rs.Header.Get("Content-Security-Policy")
+	if csp == "" {
+		t.Error("expected Content-Security-Policy header to be set")
+	}
+
 	if rs.StatusCode != http.StatusOK {
-		t.Errorf("expected %q; got %q", http.StatusOK, rs.StatusCode)
+		t.Errorf("expected %d; got %d", http.StatusOK, rs.StatusCode)
 	}
 
 	defer rs.Body.Close()
-	body, err := ioutil.ReadAll(rs.Body)
+	body, err := io.ReadAll(rs.Body)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -3,7 +3,6 @@ package models
 import (
 	"errors"
 	"time"
-	_ "time"
 )
 
 var (

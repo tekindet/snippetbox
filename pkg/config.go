@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	log "github.com/sirupsen/logrus"
 )
 
 type Config struct {
@@ -15,44 +14,38 @@ type Config struct {
 	DatabaseURI string
 }
 
-func (c *Config) getVarFromEnv(envName string) (env string, err error) {
+func getVarFromEnv(envName string) (string, error) {
 	env, exists := os.LookupEnv(envName)
 	if !exists {
-		err = fmt.Errorf("config: env variable %s is not set", envName)
+		return "", fmt.Errorf("config: env variable %s is not set", envName)
 	}
-	return
+	return env, nil
 }
 
-func (c *Config) loadEnvVariables() error {
-	err := godotenv.Load()
-	if err != nil {
-		return err
-	}
-	c.StaticDir, err = c.getVarFromEnv("STATIC_DIR")
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	c.SecretKey, err = c.getVarFromEnv("SECRET_KEY")
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	c.Addr, err = c.getVarFromEnv("APP_ADDR")
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	c.DatabaseURI, err = c.getVarFromEnv("DATABASE_URI")
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	return nil
-}
+func NewConfig() (*Config, error) {
+	_ = godotenv.Load()
 
-func NewConfig() (config *Config, err error) {
-	config = &Config{}
-	err = config.loadEnvVariables()
-	return
+	addr, err := getVarFromEnv("APP_ADDR")
+	if err != nil {
+		return nil, err
+	}
+	staticDir, err := getVarFromEnv("STATIC_DIR")
+	if err != nil {
+		return nil, err
+	}
+	secretKey, err := getVarFromEnv("SECRET_KEY")
+	if err != nil {
+		return nil, err
+	}
+	databaseURI, err := getVarFromEnv("DATABASE_URI")
+	if err != nil {
+		return nil, err
+	}
+
+	return &Config{
+		Addr:        addr,
+		StaticDir:   staticDir,
+		SecretKey:   secretKey,
+		DatabaseURI: databaseURI,
+	}, nil
 }

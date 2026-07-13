@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"database/sql"
+	"strings"
+
 	"github.com/aitumik/snippetbox/pkg/models"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -10,19 +12,26 @@ type UserModel struct {
 	DB *sql.DB
 }
 
+func isUniqueConstraintViolation(err error) bool {
+	return strings.Contains(err.Error(), "duplicate key") ||
+		strings.Contains(err.Error(), "unique constraint")
+}
+
 func (m *UserModel) Insert(name, email, password string) error {
-	HasedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
 		return err
 	}
 
 	stmt := `INSERT INTO users (name,email,hashed_password,created) VALUES($1,$2,$3,NOW())`
-	// now you have the has
-	_, err = m.DB.Exec(stmt, name, email, string(HasedPassword))
+	_, err = m.DB.Exec(stmt, name, email, string(hashedPassword))
 	if err != nil {
+		if isUniqueConstraintViolation(err) {
+			return models.ErrDuplicateEmail
+		}
 		return err
 	}
-	return err
+	return nil
 }
 
 func (m *UserModel) Authenticate(email, password string) (int, error) {
@@ -36,7 +45,6 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 		return 0, err
 	}
 
-	// check whether the password provided and the plain text match
 	err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(password))
 	if err == bcrypt.ErrMismatchedHashAndPassword {
 		return 0, models.ErrInvalidCredentials
