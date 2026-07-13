@@ -39,3 +39,11 @@ func (m *SnippetModel) GetByUser(userID int) ([]*models.Snippet, error) {
 func (m *SnippetModel) GetByTag(tagID int) ([]*models.Snippet, error) {
 	return []*models.Snippet{mockSnippet}, nil
 }
+
+func (m *SnippetModel) GetExpiringToday() ([]*models.Snippet, error) {
+	return []*models.Snippet{mockSnippet}, nil
+}
+
+func (m *SnippetModel) ExtendExpiry(id int) error {
+	return nil
+}

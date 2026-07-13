@@ -17,7 +17,14 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-	data := &TemplateData{Snippets: s}
+
+	expiring, err := app.snippet.GetExpiringToday()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	data := &TemplateData{Snippets: s, ExpiringToday: expiring}
 	app.render(w, r, "home.page.tmpl", data)
 }
 
@@ -254,4 +261,22 @@ func (app *application) logoutUser(w http.ResponseWriter, r *http.Request) {
 
 func ping(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
+}
+
+func (app *application) extendExpiry(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || id < 1 {
+		app.notFound(w)
+		return
+	}
+
+	err = app.snippet.ExtendExpiry(id)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	app.session.Put(r, "flash", "Snippet expiry extended by 1 day!")
+	user := app.authenticatedUser(r)
+	http.Redirect(w, r, fmt.Sprintf("/user/%d", user.ID), http.StatusSeeOther)
 }

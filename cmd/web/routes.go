@@ -38,6 +38,7 @@ func (app *application) routes() http.Handler {
 
 			r.Get("/snippets/create", app.createSnippetForm)
 			r.Post("/snippets/create", app.createSnippet)
+			r.Post("/snippets/{id}/extend", app.extendExpiry)
 			r.Post("/user/logout", app.logoutUser)
 		})
 	})

@@ -402,10 +402,11 @@ footer {
     border-collapse: collapse;
     width: 100%;
     margin-bottom: 36px;
+    margin-top: 1rem; 
 }
 
 .no-snippets {
-    text-align: center;
+    text-align: start;
     margin-top: 20px;
 }
 

@@ -184,3 +184,36 @@ func (s *SnippetModel) GetByTag(tagID int) ([]*models.Snippet, error) {
 	}
 	return snippets, rows.Err()
 }
+
+func (s *SnippetModel) GetExpiringToday() ([]*models.Snippet, error) {
+	stmt := `SELECT id, title, content, created, expires FROM snippets
+		WHERE expires > LOCALTIMESTAMP AND expires <= LOCALTIMESTAMP + INTERVAL '1 day'
+		ORDER BY expires ASC`
+
+	rows, err := s.DB.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var snippets []*models.Snippet
+	for rows.Next() {
+		m := &models.Snippet{}
+		err = rows.Scan(&m.ID, &m.Title, &m.Content, &m.Created, &m.Expires)
+		if err != nil {
+			return nil, err
+		}
+		m.Tags, err = s.getTagsForSnippet(m.ID)
+		if err != nil {
+			return nil, err
+		}
+		snippets = append(snippets, m)
+	}
+	return snippets, rows.Err()
+}
+
+func (s *SnippetModel) ExtendExpiry(id int) error {
+	stmt := `UPDATE snippets SET expires = expires + INTERVAL '1 day' WHERE id = $1`
+	_, err := s.DB.Exec(stmt, id)
+	return err
+}

@@ -3,29 +3,84 @@
 {{ define "title"}}Home{{end}}
 
 {{define "body"}}
-    <h2>Latest Snippets</h2>
-    {{if .Snippets}}
-        <table>
-            <tr>
-                <th>Title</th>
-                <th>Created</th>
-                <th>Tags</th>
-                <th>ID</th>
-            </tr>
-            {{range .Snippets}}
-            <tr>
-                <td><a href="/snippets/{{.ID}}">{{.Title}}</a></td>
-                <td>{{humanDate .Created}}</td>
-                <td>
-                    {{range .Tags}}
-                        <a href="/tags/{{.Name}}">{{.Name}}</a>
-                    {{end}}
-                </td>
-                <td>#{{.ID}}</td>
-            </tr>
-            {{end}}
-        </table>
-    {{else}}
-        <p>There is nothing to see here... yet!</p>
-    {{end}}
+
+
+    <div>
+        <h2>Latest Snippets</h2>
+        {{if .Snippets}}
+            <table>
+                <tr>
+                    <th>Title</th>
+                    <th>Created</th>
+                    <th>Expires</th>
+                    <th>Tags</th>
+                    <th>ID</th>
+                </tr>
+                {{range .Snippets}}
+                <tr>
+                    <td><a href="/snippets/{{.ID}}">{{.Title}}</a></td>
+                    <td>{{humanDate .Created}}</td>
+                    <td>{{humanDate .Expires}}</td>
+                    <td>
+                        {{range .Tags}}
+                            <a href="/tags/{{.Name}}">{{.Name}}</a>
+                        {{end}}
+                    </td>
+                    <td>#{{.ID}}</td>
+                </tr>
+                {{end}}
+            </table>
+        {{else}}
+            <p>There is nothing to see here... yet!</p>
+        {{end}}
+
+    </div>
+
+
+
+    <div style="margin-top: 3rem;">
+
+        <h2>Expiring Today</h2>
+
+
+        {{if .ExpiringToday}}
+            <table>
+                <tr>
+                    <th>Title</th>
+                    <th>Created</th>
+                    <th>Expires</th>
+                    <th>Tags</th>
+                    <th>Actions</th>
+                    <th>ID</th>
+                </tr>
+                {{range .ExpiringToday}}
+                <tr>
+                    <td><a href="/snippets/{{.ID}}">{{.Title}}</a></td>
+                    <td>{{humanDate .Created}}</td>
+                    <td>{{humanDate .Expires}}</td>
+                    <td>
+                        {{range .Tags}}
+                            <a href="/tags/{{.Name}}">{{.Name}}</a>
+                        {{end}}
+                    </td>
+
+                    <td>
+                        <form action="/snippets/{{.ID}}/extend" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                            <button class="btn btn-danger">Extend Expiry</button>
+                        </form>
+                    </td>
+
+                    <td>#{{.ID}}</td>
+                </tr>
+                {{end}}
+            </table>
+        {{else}}
+            <p>No snippets expiring today.</p>
+        {{end}}
+
+    </div>
+
+    </div>
+
 {{end}}

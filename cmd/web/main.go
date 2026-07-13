@@ -36,6 +36,8 @@ type application struct {
 		Latest() ([]*models.Snippet, error)
 		GetByUser(userID int) ([]*models.Snippet, error)
 		GetByTag(tagID int) ([]*models.Snippet, error)
+		GetExpiringToday() ([]*models.Snippet, error)
+		ExtendExpiry(id int) error
 	}
 	templateCache map[string]*template.Template
 	users         interface {
