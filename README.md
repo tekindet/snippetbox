@@ -64,14 +64,11 @@ docker-compose up -d
 
 
 ### Todo
-- [ ] Oauth2 for authentication
-- [ ] Redis for caching (we mostly do reads,writes are minimum)
-- [ ] Kibana for analytics and visualization of data
-- [ ] Setup CI/CD
-- [ ] Add coverage tests
+- [ ] Add unit,e2e and coverage tests to ensure the robustness
 
 ### In Progress
-- [ ] Add search capabilities by integrating with elasticsearch
+- [ ] Add pagination to prevent long lists of snippets
+- [ ] Add search capabilities by integrating postgres full text search
 
 ### Done ✓
 - [x] Cache templates for faster rendering
@@ -79,10 +76,11 @@ docker-compose up -d
 - [x] Panic recovery middleware
 - [x] Add middlewares
 - [x] Dockerize the application
+- [x] Setup CI/CD
 
 # Tools
 * Postgres
-* Elasticsearch
+* Golang
 
 # Coverage
 

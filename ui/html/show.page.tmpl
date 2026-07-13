@@ -9,7 +9,7 @@
                 <strong>{{.Title}}</strong>
                 <span>#{{.ID}}</span>
             </div>
-            <pre><code>{{.Content}}</code></pre>
+            <div class="snippet-content">{{renderMarkdown .Content}}</div>
             <div class="metadata">
                 {{if .Tags}}
                     <div>

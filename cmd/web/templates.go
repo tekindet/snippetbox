@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"html/template"
 	"path/filepath"
 	"time"
 
 	"github.com/aitumik/snippetbox/pkg/forms"
 	"github.com/aitumik/snippetbox/pkg/models"
+	"github.com/microcosm-cc/bluemonday"
+	"github.com/yuin/goldmark"
 )
 
 type TemplateData struct {
@@ -67,8 +70,17 @@ func humanDate(t time.Time) string {
 	return t.UTC().Format("02 Jan 2006 at 15:04")
 }
 
-// Initialize the template.FuncMap value with the string-keyed map
-// which acts as a lookup table
+func renderMarkdown(md string) template.HTML {
+	var buf bytes.Buffer
+	if err := goldmark.Convert([]byte(md), &buf); err != nil {
+		return template.HTML(md)
+	}
+	policy := bluemonday.UGCPolicy()
+	policy.AllowElements("pre", "code", "kbd")
+	return template.HTML(policy.Sanitize(buf.String()))
+}
+
 var functions = template.FuncMap{
-	"humanDate": humanDate,
+	"humanDate":      humanDate,
+	"renderMarkdown": renderMarkdown,
 }

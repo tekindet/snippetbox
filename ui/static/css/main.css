@@ -228,6 +228,68 @@ button:hover {
     border-radius: 3px;
 }
 
+.snippet-content {
+    padding: 18px;
+    border-top: 1px solid #E4E5E7;
+    border-bottom: 1px solid #E4E5E7;
+}
+
+.snippet-content p {
+    margin-bottom: 18px;
+}
+
+.snippet-content pre {
+    background-color: #F7F9FA;
+    border: 1px solid #E4E5E7;
+    border-radius: 3px;
+    padding: 18px;
+    overflow-x: auto;
+    margin-bottom: 18px;
+}
+
+.snippet-content code {
+    font-family: "Ubuntu Mono", monospace;
+    font-size: 16px;
+    background-color: #F7F9FA;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.snippet-content pre code {
+    background: none;
+    padding: 0;
+}
+
+.snippet-content ul, .snippet-content ol {
+    margin-bottom: 18px;
+    padding-left: 36px;
+}
+
+.snippet-content li {
+    margin-bottom: 6px;
+}
+
+.snippet-content blockquote {
+    border-left: 4px solid #62CB31;
+    padding: 9px 18px;
+    margin-bottom: 18px;
+    background-color: #F7F9FA;
+    color: #6A6C6F;
+}
+
+.snippet-content h1, .snippet-content h2, .snippet-content h3 {
+    margin-top: 27px;
+    margin-bottom: 18px;
+}
+
+.snippet-content a {
+    color: #62CB31;
+}
+
+.snippet-content table {
+    margin-bottom: 18px;
+}
+
 .snippet pre {
     padding: 18px;
     border-top: 1px solid #E4E5E7;
