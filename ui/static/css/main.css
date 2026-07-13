@@ -313,3 +313,22 @@ footer {
     color: #6A6C6F;
     text-align: center;
 }
+
+.account-summary {
+    background-color: #FFFFFF;
+    border: 1px solid #E4E5E7;
+    border-radius: 3px;
+    padding: 18px;
+    margin-bottom: 36px;
+}
+
+.account-summary h3 {
+    font-size: 22px;
+    margin-bottom: 18px;
+}
+
+.account-summary p {
+    margin-bottom: 18px;
+    font-size: 18px;
+    color: #6A6C6F;
+}

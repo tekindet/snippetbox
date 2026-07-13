@@ -9,9 +9,20 @@
         <p>Member since: {{humanDate .User.Created}}</p>
     </div>
 
+    <div class="account-summary">
+        <h3>Account Summary</h3>
+        <p>Total snippets: {{len .Snippets}}</p>
+        <p>Total tags: {{len .Tags}}</p>
+        <p>Total users: {{len .Users}}</p>
+    </div>
+
+    <div class="snippets-box">
+        <h1>Are we here yet</h1>
+    </div>
+
     <h3>Recent Snippets</h3>
     {{if .Snippets}}
-        <table>
+        <table class="account-summary>
             <tr>
                 <th>ID</th>
                 <th>Title</th>
@@ -32,6 +43,11 @@
             {{end}}
         </table>
     {{else}}
-        <p>No snippets yet.</p>
+        
+        <div class="no-snippets" style="text-align: center; margin-top: 20px;">
+            <p>No snippets yet.</p>
+            <button class="btn btn-primary"><a href="/snippets/create">Create a new snippet</a></button>
+        </div>
+
     {{end}}
 {{end}}

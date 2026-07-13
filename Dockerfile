@@ -10,7 +10,7 @@ RUN go mod download
 
 COPY . .
 
-RUN --mount=type=cache,target=/go-build \
+RUN --mount=type=cache,id=go-build,target=/go-build \
     go build -o sniper cmd/web/*
 
 FROM alpine:3.19 AS production
