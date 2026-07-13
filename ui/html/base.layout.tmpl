@@ -20,6 +20,7 @@
                 </div>
                 <div>
                     {{ if .AuthenticatedUser}}
+                    <a href="/user/{{.AuthenticatedUser.ID}}">My Profile</a>
                     <form method="POST" action="/user/logout">
                         <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                         <button>Logout({{.AuthenticatedUser.Name}})</button>

@@ -31,13 +31,22 @@
                 <input type="radio" name="expires" value="7" {{if (eq $exp "7")}}checked{{end}}> One Week
                 <input type="radio" name="expires" value="1" {{if (eq $exp "1")}}checked{{end}}> One Day
             </div>
+        {{end}}
             <div>
-                <label>Tags (comma-separated):</label>
-                <input type="text" name="tags" placeholder="e.g. go, web, api">
+                <label>Tags:</label>
+                {{if .Tags}}
+                    <div>
+                        {{range .Tags}}
+                            <label>
+                                <input type="checkbox" name="tags" value="{{.Name}}"> {{.Name}}
+                            </label>
+                        {{end}}
+                    </div>
+                {{end}}
+                <input type="text" name="new_tags" placeholder="Add new tags (comma-separated)">
             </div>
             <div>
                 <input type="submit" value="Publish snippet">
             </div>
-        {{end}}
     </form>
 {{end}}

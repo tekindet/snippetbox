@@ -35,36 +35,55 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 	form.PermittedValues("expires", "365", "7", "1")
 
 	if !form.Valid() {
-		data := &TemplateData{Form: form}
+		tags, _ := app.tags.GetAll()
+		data := &TemplateData{Form: form, Tags: tags}
 		app.render(w, r, "create.page.tmpl", data)
 		return
 	}
 
-	tagNames := []string{}
-	if tagsStr := form.Get("tags"); tagsStr != "" {
-		for _, t := range strings.Split(tagsStr, ",") {
-			t = strings.TrimSpace(t)
-			if t != "" {
-				tagNames = append(tagNames, t)
+	var tagIDs []int
+
+	selectedTags := r.PostForm["tags"]
+	for _, t := range selectedTags {
+		t = strings.TrimSpace(t)
+		if t != "" {
+			tag, err := app.tags.GetByName(t)
+			if err == models.ErrNoRecord {
+				id, err := app.tags.Insert(t)
+				if err != nil {
+					app.serverError(w, err)
+					return
+				}
+				tagIDs = append(tagIDs, id)
+			} else if err != nil {
+				app.serverError(w, err)
+				return
+			} else {
+				tagIDs = append(tagIDs, tag.ID)
 			}
 		}
 	}
 
-	var tagIDs []int
-	for _, name := range tagNames {
-		tag, err := app.tags.GetByName(name)
-		if err == models.ErrNoRecord {
-			id, err := app.tags.Insert(name)
-			if err != nil {
-				app.serverError(w, err)
-				return
+	newTags := r.Form.Get("new_tags")
+	if newTags != "" {
+		for _, t := range strings.Split(newTags, ",") {
+			t = strings.TrimSpace(t)
+			if t != "" {
+				tag, err := app.tags.GetByName(t)
+				if err == models.ErrNoRecord {
+					id, err := app.tags.Insert(t)
+					if err != nil {
+						app.serverError(w, err)
+						return
+					}
+					tagIDs = append(tagIDs, id)
+				} else if err != nil {
+					app.serverError(w, err)
+					return
+				} else {
+					tagIDs = append(tagIDs, tag.ID)
+				}
 			}
-			tagIDs = append(tagIDs, id)
-		} else if err != nil {
-			app.serverError(w, err)
-			return
-		} else {
-			tagIDs = append(tagIDs, tag.ID)
 		}
 	}
 
@@ -79,7 +98,12 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request) {
-	data := &TemplateData{Form: forms.New(nil)}
+	tags, err := app.tags.GetAll()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	data := &TemplateData{Form: forms.New(nil), Tags: tags}
 	app.render(w, r, "create.page.tmpl", data)
 }
 

@@ -18,6 +18,7 @@ type TemplateData struct {
 	AuthenticatedUser *models.User
 	CSRFToken         string
 	Tag               *models.Tag
+	Tags              []*models.Tag
 	User              *models.User
 }
 
