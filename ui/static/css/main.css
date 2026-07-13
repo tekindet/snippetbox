@@ -314,7 +314,7 @@ footer {
     text-align: center;
 }
 
-.account-summary {
+.account-profile-summary {
     background-color: #FFFFFF;
     border: 1px solid #E4E5E7;
     border-radius: 3px;
@@ -322,13 +322,32 @@ footer {
     margin-bottom: 36px;
 }
 
-.account-summary h3 {
+.account-profile-summary h2 {
     font-size: 22px;
-    margin-bottom: 18px;
+    margin-bottom: 9px;
+    position: static;
 }
 
-.account-summary p {
+.account-profile-summary p {
     margin-bottom: 18px;
     font-size: 18px;
+    color: #6A6C6F;
+}
+
+.account-snippet-summary {
+    background: white;
+    border: 1px solid #E4E5E7;
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 36px;
+}
+
+.no-snippets {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.no-snippets p {
+    margin-bottom: 18px;
     color: #6A6C6F;
 }
