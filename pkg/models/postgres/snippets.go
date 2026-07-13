@@ -12,7 +12,7 @@ type SnippetModel struct {
 	DB *sql.DB
 }
 
-func (s *SnippetModel) Insert(title, content, expires string, tagIDs []int) (int, error) {
+func (s *SnippetModel) Insert(title, content, expires string, tagIDs []int, userID int) (int, error) {
 	tx, err := s.DB.Begin()
 	if err != nil {
 		return 0, err
@@ -26,10 +26,10 @@ func (s *SnippetModel) Insert(title, content, expires string, tagIDs []int) (int
 
 	createdAt := time.Now()
 	expiresAt := createdAt.AddDate(0, 0, normExpires)
-	stmt := `INSERT INTO snippets(title, content, created, expires) VALUES($1, $2, NOW(), $3) RETURNING id`
+	stmt := `INSERT INTO snippets(title, content, created, expires, user_id) VALUES($1, $2, NOW(), $3, $4) RETURNING id`
 
 	var id int
-	err = tx.QueryRow(stmt, title, content, expiresAt).Scan(&id)
+	err = tx.QueryRow(stmt, title, content, expiresAt, userID).Scan(&id)
 	if err != nil {
 		return 0, err
 	}

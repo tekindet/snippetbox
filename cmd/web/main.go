@@ -31,7 +31,7 @@ type application struct {
 	session *sessions.Session
 	cfg     *pkg.Config
 	snippet interface {
-		Insert(title, content, expires string, tagIDs []int) (int, error)
+		Insert(title, content, expires string, tagIDs []int, userID int) (int, error)
 		Get(id int) (*models.Snippet, error)
 		Latest() ([]*models.Snippet, error)
 		GetByUser(userID int) ([]*models.Snippet, error)

@@ -87,7 +87,7 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	id, err := app.snippet.Insert(form.Get("title"), form.Get("content"), form.Get("expires"), tagIDs)
+	id, err := app.snippet.Insert(form.Get("title"), form.Get("content"), form.Get("expires"), tagIDs, app.authenticatedUser(r).ID)
 	if err != nil {
 		app.serverError(w, err)
 		return
