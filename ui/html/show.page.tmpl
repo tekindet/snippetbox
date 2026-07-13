@@ -11,6 +11,14 @@
             </div>
             <pre><code>{{.Content}}</code></pre>
             <div class="metadata">
+                {{if .Tags}}
+                    <div>
+                        Tags:
+                        {{range .Tags}}
+                            <a href="/tags/{{.Name}}">{{.Name}}</a>
+                        {{end}}
+                    </div>
+                {{end}}
                 <time>Created : {{humanDate .Created}}</time>
                 <time>Expires : {{humanDate .Expires}}</time>
             </div>

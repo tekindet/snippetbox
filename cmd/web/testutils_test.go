@@ -3,7 +3,7 @@ package main
 import (
 	"html"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -38,9 +38,10 @@ func newTestApplication(t *testing.T) *application {
 
 	var snippetModel = &mock.SnippetModel{}
 
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+
 	return &application{
-		infoLogger:    log.New(io.Discard, "", 0),
-		errorLogger:   log.New(io.Discard, "", 0),
+		logger:        logger,
 		session:       session,
 		snippet:       snippetModel,
 		templateCache: templateCache,

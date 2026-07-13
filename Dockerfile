@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 ENV CGO_ENABLED=0
 ENV GO111MODULE=on
@@ -21,6 +21,7 @@ WORKDIR /app
 
 COPY --from=builder /app/sniper .
 COPY --from=builder /app/ui ./ui
+COPY --from=builder /app/migrations ./migrations
 
 EXPOSE 5000
 

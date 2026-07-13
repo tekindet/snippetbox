@@ -17,6 +17,8 @@ type TemplateData struct {
 	Form              *forms.Form
 	AuthenticatedUser *models.User
 	CSRFToken         string
+	Tag               *models.Tag
+	User              *models.User
 }
 
 // NewTemplateCache returns a new TemplateCache

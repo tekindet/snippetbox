@@ -13,7 +13,7 @@ import (
 
 func (app *application) serverError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	app.errorLogger.Output(2, trace)
+	app.logger.Error("server error", "error", err, "stack", trace)
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
@@ -25,18 +25,18 @@ func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
 }
 
-// render `render the templates with the data provided`
+func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
+	app.clientError(w, http.StatusBadRequest)
+}
+
 func (app *application) render(w http.ResponseWriter, r *http.Request, name string, td *TemplateData) {
 	ts, ok := app.templateCache[name]
 	if !ok {
-		// Good error message
-		app.serverError(w, fmt.Errorf("the template %s does not exists", name))
+		app.serverError(w, fmt.Errorf("the template %s does not exist", name))
 		return
 	}
 
 	buf := new(bytes.Buffer)
-
-	// check to see what is in the buffer
 
 	err := ts.Execute(buf, app.addDefault(td, r))
 	if err != nil {
@@ -56,7 +56,6 @@ func (app *application) addDefault(td *TemplateData, r *http.Request) *TemplateD
 		td = &TemplateData{}
 	}
 
-	//add this to check if the user is authenticated
 	td.AuthenticatedUser = app.authenticatedUser(r)
 	td.CSRFToken = nosurf.Token(r)
 	td.CurrentYear = time.Now().Year()

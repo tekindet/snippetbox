@@ -1,19 +1,21 @@
 {{ template "base" .}}
 
-{{ define "title"}}Home{{end}}
+{{define "title"}}Snippets tagged "{{.Tag.Name}}"{{end}}
 
 {{define "body"}}
-    <h2>Latest Snippets</h2>
+    <h2>Snippets tagged "{{.Tag.Name}}"</h2>
+
     {{if .Snippets}}
         <table>
             <tr>
+                <th>ID</th>
                 <th>Title</th>
                 <th>Created</th>
                 <th>Tags</th>
-                <th>ID</th>
             </tr>
             {{range .Snippets}}
             <tr>
+                <td><a href="/snippets/{{.ID}}">#{{.ID}}</a></td>
                 <td><a href="/snippets/{{.ID}}">{{.Title}}</a></td>
                 <td>{{humanDate .Created}}</td>
                 <td>
@@ -21,11 +23,10 @@
                         <a href="/tags/{{.Name}}">{{.Name}}</a>
                     {{end}}
                 </td>
-                <td>#{{.ID}}</td>
             </tr>
             {{end}}
         </table>
     {{else}}
-        <p>There is nothing to see here... yet!</p>
+        <p>No snippets found with this tag.</p>
     {{end}}
 {{end}}

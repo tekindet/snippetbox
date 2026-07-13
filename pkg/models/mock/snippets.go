@@ -15,7 +15,7 @@ var mockSnippet = &models.Snippet{
 
 type SnippetModel struct{}
 
-func (m *SnippetModel) Insert(title, content, expires string) (int, error) {
+func (m *SnippetModel) Insert(title, content, expires string, tagIDs []int) (int, error) {
 	return 2, nil
 }
 
@@ -29,5 +29,13 @@ func (m *SnippetModel) Get(id int) (*models.Snippet, error) {
 }
 
 func (m *SnippetModel) Latest() ([]*models.Snippet, error) {
+	return []*models.Snippet{mockSnippet}, nil
+}
+
+func (m *SnippetModel) GetByUser(userID int) ([]*models.Snippet, error) {
+	return []*models.Snippet{mockSnippet}, nil
+}
+
+func (m *SnippetModel) GetByTag(tagID int) ([]*models.Snippet, error) {
 	return []*models.Snippet{mockSnippet}, nil
 }

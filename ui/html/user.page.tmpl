@@ -1,19 +1,26 @@
 {{ template "base" .}}
 
-{{ define "title"}}Home{{end}}
+{{define "title"}}{{.User.Name}}'s Profile{{end}}
 
 {{define "body"}}
-    <h2>Latest Snippets</h2>
+    <div class="profile">
+        <h2>{{.User.Name}}</h2>
+        <p>Email: {{.User.Email}}</p>
+        <p>Member since: {{humanDate .User.Created}}</p>
+    </div>
+
+    <h3>Recent Snippets</h3>
     {{if .Snippets}}
         <table>
             <tr>
+                <th>ID</th>
                 <th>Title</th>
                 <th>Created</th>
                 <th>Tags</th>
-                <th>ID</th>
             </tr>
             {{range .Snippets}}
             <tr>
+                <td><a href="/snippets/{{.ID}}">#{{.ID}}</a></td>
                 <td><a href="/snippets/{{.ID}}">{{.Title}}</a></td>
                 <td>{{humanDate .Created}}</td>
                 <td>
@@ -21,11 +28,10 @@
                         <a href="/tags/{{.Name}}">{{.Name}}</a>
                     {{end}}
                 </td>
-                <td>#{{.ID}}</td>
             </tr>
             {{end}}
         </table>
     {{else}}
-        <p>There is nothing to see here... yet!</p>
+        <p>No snippets yet.</p>
     {{end}}
 {{end}}

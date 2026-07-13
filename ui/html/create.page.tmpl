@@ -32,6 +32,10 @@
                 <input type="radio" name="expires" value="1" {{if (eq $exp "1")}}checked{{end}}> One Day
             </div>
             <div>
+                <label>Tags (comma-separated):</label>
+                <input type="text" name="tags" placeholder="e.g. go, web, api">
+            </div>
+            <div>
                 <input type="submit" value="Publish snippet">
             </div>
         {{end}}

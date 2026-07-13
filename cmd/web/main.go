@@ -1,21 +1,25 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
+	"fmt"
 	"html/template"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
-
-	"github.com/aitumik/snippetbox/pkg/models/postgres"
 
 	"github.com/aitumik/snippetbox/pkg"
 	"github.com/aitumik/snippetbox/pkg/models"
+	"github.com/aitumik/snippetbox/pkg/models/postgres"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/golangcollege/sessions"
-	psql "gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 type contextKey string
@@ -23,14 +27,15 @@ type contextKey string
 var contextKeyUser = contextKey("user")
 
 type application struct {
-	errorLogger *log.Logger
-	infoLogger  *log.Logger
-	session     *sessions.Session
-	cfg         *pkg.Config
-	snippet     interface {
-		Insert(title, content, expires string) (int, error)
+	logger  *slog.Logger
+	session *sessions.Session
+	cfg     *pkg.Config
+	snippet interface {
+		Insert(title, content, expires string, tagIDs []int) (int, error)
 		Get(id int) (*models.Snippet, error)
 		Latest() ([]*models.Snippet, error)
+		GetByUser(userID int) ([]*models.Snippet, error)
+		GetByTag(tagID int) ([]*models.Snippet, error)
 	}
 	templateCache map[string]*template.Template
 	users         interface {
@@ -38,16 +43,21 @@ type application struct {
 		Authenticate(email, password string) (int, error)
 		Get(id int) (*models.User, error)
 	}
+	tags interface {
+		Insert(name string) (int, error)
+		GetByName(name string) (*models.Tag, error)
+		GetForSnippet(snippetID int) ([]*models.Tag, error)
+		GetAll() ([]*models.Tag, error)
+	}
 }
 
 func main() {
-
-	infoLogger := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	errorLogger := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile|log.Llongfile)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	cfg, err := pkg.NewConfig()
 	if err != nil {
-		errorLogger.Fatal(err)
+		logger.Error("failed to load config", "error", err)
+		os.Exit(1)
 	}
 
 	flag.StringVar(&cfg.Addr, "addr", cfg.Addr, "HTTP Network Address")
@@ -55,30 +65,40 @@ func main() {
 	flag.StringVar(&cfg.SecretKey, "secret", cfg.SecretKey, "Secret Key")
 	flag.Parse()
 
-	dsn := cfg.DatabaseURI
-
-	conn, err := gorm.Open(psql.Open(dsn), &gorm.Config{})
+	db, err := sql.Open("postgres", cfg.DatabaseURI)
 	if err != nil {
-		errorLogger.Fatal(err)
+		logger.Error("failed to open database", "error", err)
+		os.Exit(1)
 	}
 
-	db, err := conn.DB()
+	if err := db.Ping(); err != nil {
+		logger.Error("failed to ping database", "error", err)
+		os.Exit(1)
+	}
+	logger.Info("database connection established")
+
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5 * time.Minute)
+
+	m, err := migrate.New("file://migrations", cfg.DatabaseURI)
 	if err != nil {
-		errorLogger.Fatal(err)
+		logger.Error("failed to create migrate instance", "error", err)
+		os.Exit(1)
 	}
 
-	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			errorLogger.Fatal(err)
-		}
-	}(db)
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		logger.Error("failed to run migrations", "error", err)
+		os.Exit(1)
+	}
+	logger.Info("database migrations applied")
 
 	templateCache, err := NewTemplateCache("./ui/html/")
 	if err != nil {
-		errorLogger.Fatal(err)
+		logger.Error("failed to initialize template cache", "error", err)
+		os.Exit(1)
 	}
-	infoLogger.Print("Initializing the template cache")
+	logger.Info("template cache initialized")
 
 	session := sessions.New([]byte(cfg.SecretKey))
 	session.Lifetime = 12 * time.Hour
@@ -86,35 +106,73 @@ func main() {
 	session.SameSite = http.SameSiteStrictMode
 
 	app := &application{
-		errorLogger: errorLogger,
-		infoLogger:  infoLogger,
-		session:     session,
-		cfg:         cfg,
-		snippet: &postgres.SnippetModel{
-			DB: db,
-		},
+		logger:        logger,
+		session:       session,
+		cfg:           cfg,
+		snippet:       &postgres.SnippetModel{DB: db},
 		templateCache: templateCache,
-		users: &postgres.UserModel{
-			DB: db,
-		},
+		users:         &postgres.UserModel{DB: db},
+		tags:          &postgres.TagModel{DB: db},
 	}
-
-	conn.AutoMigrate(&models.Snippet{})
-	conn.AutoMigrate(&models.User{})
-	infoLogger.Print("Migrating database models")
 
 	mux := app.routes()
 
 	server := &http.Server{
 		Addr:         cfg.Addr,
-		ErrorLog:     errorLogger,
 		Handler:      mux,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
-	infoLogger.Printf("Server started at %s", cfg.Addr)
+	shutdownError := make(chan error)
+
+	go func() {
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		s := <-quit
+		logger.Info("caught signal", "signal", s.String())
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		shutdownError <- server.Shutdown(ctx)
+	}()
+
+	logger.Info("server starting", "addr", cfg.Addr)
 	err = server.ListenAndServe()
-	errorLogger.Fatal(err)
+	if err != nil && err != http.ErrServerClosed {
+		logger.Error("server error", "error", err)
+		os.Exit(1)
+	}
+
+	if err := <-shutdownError; err != nil {
+		logger.Error("error during shutdown", "error", err)
+		os.Exit(1)
+	}
+
+	logger.Info("server stopped gracefully")
+
+	if _, err := m.Close(); err != nil {
+		logger.Error("error closing migrations", "error", err)
+	}
+
+	if err := db.Close(); err != nil {
+		logger.Error("error closing database", "error", err)
+	}
+}
+
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return nil, err
+	}
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
+func printVersion() string {
+	return fmt.Sprintf("snippetbox %s", "1.0.0")
 }

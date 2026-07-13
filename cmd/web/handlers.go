@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/aitumik/snippetbox/pkg/forms"
 	"github.com/aitumik/snippetbox/pkg/models"
@@ -11,22 +12,16 @@ import (
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	// pat now handles request to the `/` route
 	s, err := app.snippet.Latest()
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
-	// create a value of struct TemplateData to hold  slice of snippets
 	data := &TemplateData{Snippets: s}
 	app.render(w, r, "home.page.tmpl", data)
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
-	// First wee need to call the method r.ParseForm() which loads the values of the post
-	// to the r.PostForm map
-	// We can get for example title if we do this `r.ParseForm().Get("Title")`
-	// Note that the r.ParseForm() is limited to 10MB
-	// To change this limit use the http.MaxBytesReader()
 	r.Body = http.MaxBytesReader(w, r.Body, 4096)
 	err := r.ParseForm()
 	if err != nil {
@@ -39,16 +34,41 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 	form.MaxLength("title", 100)
 	form.PermittedValues("expires", "365", "7", "1")
 
-	// if the form is not valid redisplay the form
 	if !form.Valid() {
-		data := &TemplateData{
-			Form: form,
-		}
+		data := &TemplateData{Form: form}
 		app.render(w, r, "create.page.tmpl", data)
 		return
 	}
 
-	id, err := app.snippet.Insert(form.Get("title"), form.Get("content"), form.Get("expires"))
+	tagNames := []string{}
+	if tagsStr := form.Get("tags"); tagsStr != "" {
+		for _, t := range strings.Split(tagsStr, ",") {
+			t = strings.TrimSpace(t)
+			if t != "" {
+				tagNames = append(tagNames, t)
+			}
+		}
+	}
+
+	var tagIDs []int
+	for _, name := range tagNames {
+		tag, err := app.tags.GetByName(name)
+		if err == models.ErrNoRecord {
+			id, err := app.tags.Insert(name)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+			tagIDs = append(tagIDs, id)
+		} else if err != nil {
+			app.serverError(w, err)
+			return
+		} else {
+			tagIDs = append(tagIDs, tag.ID)
+		}
+	}
+
+	id, err := app.snippet.Insert(form.Get("title"), form.Get("content"), form.Get("expires"), tagIDs)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -59,9 +79,7 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request) {
-	data := &TemplateData{
-		Form: forms.New(nil),
-	}
+	data := &TemplateData{Form: forms.New(nil)}
 	app.render(w, r, "create.page.tmpl", data)
 }
 
@@ -80,12 +98,63 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-	// Create and instance of a TemplateData struct holding the snippet data
-	data := &TemplateData{
-		Snippet: s,
+
+	data := &TemplateData{Snippet: s}
+	app.render(w, r, "show.page.tmpl", data)
+}
+
+func (app *application) showTagSnippets(w http.ResponseWriter, r *http.Request) {
+	tagName := chi.URLParam(r, "name")
+
+	tag, err := app.tags.GetByName(tagName)
+	if err == models.ErrNoRecord {
+		app.notFound(w)
+		return
+	} else if err != nil {
+		app.serverError(w, err)
+		return
 	}
 
-	app.render(w, r, "show.page.tmpl", data)
+	snippets, err := app.snippet.GetByTag(tag.ID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	data := &TemplateData{
+		Snippets: snippets,
+		Tag:      tag,
+	}
+	app.render(w, r, "tag.page.tmpl", data)
+}
+
+func (app *application) showUserProfile(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || id < 1 {
+		app.notFound(w)
+		return
+	}
+
+	user, err := app.users.Get(id)
+	if err == models.ErrNoRecord {
+		app.notFound(w)
+		return
+	} else if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	snippets, err := app.snippet.GetByUser(id)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	data := &TemplateData{
+		User:     user,
+		Snippets: snippets,
+	}
+	app.render(w, r, "user.page.tmpl", data)
 }
 
 func (app *application) signupUserForm(w http.ResponseWriter, r *http.Request) {
@@ -107,9 +176,7 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 	form.MinLength("password", 10)
 
 	if !form.Valid() {
-		data := &TemplateData{
-			Form: form,
-		}
+		data := &TemplateData{Form: form}
 		app.render(w, r, "signup.page.tmpl", data)
 		return
 	}
@@ -117,10 +184,7 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 	err = app.users.Insert(form.Get("name"), form.Get("email"), form.Get("password"))
 	if err != nil {
 		form.Errors.Add("email", "Email address already in use")
-
-		data := &TemplateData{
-			Form: form,
-		}
+		data := &TemplateData{Form: form}
 		app.render(w, r, "signup.page.tmpl", data)
 		return
 	}
@@ -142,23 +206,18 @@ func (app *application) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check if the credentials are valid if not add
-	// generic error message to the form
 	form := forms.New(r.PostForm)
 	id, err := app.users.Authenticate(form.Get("email"), form.Get("password"))
 
 	if err == models.ErrInvalidCredentials {
 		form.Errors.Add("generic", "Wrong email or password")
-		app.render(w, r, "login.page.tmpl", &TemplateData{
-			Form: form,
-		})
+		app.render(w, r, "login.page.tmpl", &TemplateData{Form: form})
 		return
 	} else if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	// Add the current id of the user to the session
 	app.session.Put(r, "userID", id)
 	http.Redirect(w, r, "/snippets/create", http.StatusSeeOther)
 }
