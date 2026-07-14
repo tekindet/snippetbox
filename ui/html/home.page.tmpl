@@ -21,11 +21,11 @@
                 <tr>
                     <td><a href="/snippets/{{.ID}}">{{.Title}}</a></td>
                     <td>{{.Author}}</td>
-                    <td>{{relativeTime .Created}}</td>
-                    <td>{{relativeTime .Expires}}</td>
+                    <td>{{humanDate .Created}}</td>
+                    <td>{{humanDate .Expires}}</td>
                     <td>
                         {{range .Tags}}
-                            <a href="/tags/{{.Name}}">{{.Name}}</a>
+                            <a href="/tags/{{.Name}}" class="tag-pill">{{.Name}}</a>
                         {{end}}
                     </td>
                     <td>#{{.ID}}</td>
@@ -60,11 +60,11 @@
                 <tr>
                     <td><a href="/snippets/{{.ID}}">{{.Title}}</a></td>
                     <td>{{.Author}}</td>
-                    <td>{{relativeTime .Created}}</td>
-                    <td>{{relativeTime .Expires}}</td>
+                    <td>{{humanDate .Created}}</td>
+                    <td>{{humanDate .Expires}}</td>
                     <td>
                         {{range .Tags}}
-                            <a href="/tags/{{.Name}}">{{.Name}}</a>
+                            <a href="/tags/{{.Name}}" class="tag-pill">{{.Name}}</a>
                         {{end}}
                     </td>
 

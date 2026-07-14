@@ -20,7 +20,7 @@
                 <td>{{humanDate .Created}}</td>
                 <td>
                     {{range .Tags}}
-                        <a href="/tags/{{.Name}}">{{.Name}}</a>
+                        <a href="/tags/{{.Name}}" class="tag-pill">{{.Name}}</a>
                     {{end}}
                 </td>
             </tr>

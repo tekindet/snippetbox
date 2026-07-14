@@ -24,11 +24,11 @@
             <tr>
                 <td><a href="/snippets/{{.ID}}">#{{.ID}}</a></td>
                 <td><a href="/snippets/{{.ID}}">{{.Title}}</a></td>
-                <td>{{relativeTime .Created}}</td>
-                <td>{{relativeTime .Expires}}</td>
+                <td>{{humanDate .Created}}</td>
+                <td>{{humanDate .Expires}}</td>
                 <td>
                     {{range .Tags}}
-                        <a href="/tags/{{.Name}}">{{.Name}}</a>
+                        <a href="/tags/{{.Name}}" class="tag-pill">{{.Name}}</a>
                     {{end}}
                 </td>
             </tr>

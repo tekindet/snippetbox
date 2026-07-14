@@ -18,7 +18,7 @@ body {
 }
 
 header, nav, section, footer {
-    padding: 2px calc((100% - 800px) / 2) 0;
+    padding: 2px calc((100% - 900px) / 2) 0;
 }
 
 section {
@@ -413,4 +413,21 @@ footer {
 .no-snippets p {
     margin-bottom: 18px;
     color: #6A6C6F;
+}
+
+.tag-pill {
+    display: inline-block;
+    background-color: #34495E;
+    color: #FFFFFF;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    text-decoration: none;
+    margin-right: 4px;
+}
+
+.tag-pill:hover {
+    background-color: #62CB31;
+    color: #FFFFFF;
+    text-decoration: none;
 }
