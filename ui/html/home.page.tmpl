@@ -11,6 +11,7 @@
             <table>
                 <tr>
                     <th>Title</th>
+                    <th>Author</th>
                     <th>Created</th>
                     <th>Expires</th>
                     <th>Tags</th>
@@ -19,8 +20,9 @@
                 {{range .Snippets}}
                 <tr>
                     <td><a href="/snippets/{{.ID}}">{{.Title}}</a></td>
-                    <td>{{humanDate .Created}}</td>
-                    <td>{{humanDate .Expires}}</td>
+                    <td>{{.Author}}</td>
+                    <td>{{relativeTime .Created}}</td>
+                    <td>{{relativeTime .Expires}}</td>
                     <td>
                         {{range .Tags}}
                             <a href="/tags/{{.Name}}">{{.Name}}</a>
@@ -47,6 +49,7 @@
             <table>
                 <tr>
                     <th>Title</th>
+                    <th>Author</th>
                     <th>Created</th>
                     <th>Expires</th>
                     <th>Tags</th>
@@ -56,8 +59,9 @@
                 {{range .ExpiringToday}}
                 <tr>
                     <td><a href="/snippets/{{.ID}}">{{.Title}}</a></td>
-                    <td>{{humanDate .Created}}</td>
-                    <td>{{humanDate .Expires}}</td>
+                    <td>{{.Author}}</td>
+                    <td>{{relativeTime .Created}}</td>
+                    <td>{{relativeTime .Expires}}</td>
                     <td>
                         {{range .Tags}}
                             <a href="/tags/{{.Name}}">{{.Name}}</a>

@@ -18,6 +18,7 @@ type Snippet struct {
 	Created time.Time `json:"created_at"`
 	Expires time.Time `json:"expires_at"`
 	Tags    []Tag     `json:"tags,omitempty"`
+	Author  string    `json:"author"`
 }
 
 type User struct {

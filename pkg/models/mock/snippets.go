@@ -11,6 +11,7 @@ var mockSnippet = &models.Snippet{
 	Content: "I never meant for any of this to happen",
 	Created: time.Now(),
 	Expires: time.Now(),
+	Author:  "Test User",
 }
 
 type SnippetModel struct{}

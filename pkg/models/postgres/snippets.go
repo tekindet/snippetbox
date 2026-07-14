@@ -69,7 +69,9 @@ func (s *SnippetModel) Get(id int) (*models.Snippet, error) {
 }
 
 func (s *SnippetModel) Latest() ([]*models.Snippet, error) {
-	stmt := `SELECT id, title, content, created, expires FROM snippets ORDER BY created DESC LIMIT 10`
+	stmt := `SELECT s.id, s.title, s.content, s.created, s.expires, COALESCE(u.name, 'Unknown') FROM snippets s
+		LEFT JOIN users u ON s.user_id = u.id
+		ORDER BY s.created DESC LIMIT 10`
 
 	rows, err := s.DB.Query(stmt)
 	if err != nil {
@@ -81,7 +83,7 @@ func (s *SnippetModel) Latest() ([]*models.Snippet, error) {
 
 	for rows.Next() {
 		m := &models.Snippet{}
-		err = rows.Scan(&m.ID, &m.Title, &m.Content, &m.Created, &m.Expires)
+		err = rows.Scan(&m.ID, &m.Title, &m.Content, &m.Created, &m.Expires, &m.Author)
 		if err != nil {
 			return nil, err
 		}
@@ -186,9 +188,10 @@ func (s *SnippetModel) GetByTag(tagID int) ([]*models.Snippet, error) {
 }
 
 func (s *SnippetModel) GetExpiringToday() ([]*models.Snippet, error) {
-	stmt := `SELECT id, title, content, created, expires FROM snippets
-		WHERE expires > LOCALTIMESTAMP AND expires <= LOCALTIMESTAMP + INTERVAL '1 day'
-		ORDER BY expires ASC`
+	stmt := `SELECT s.id, s.title, s.content, s.created, s.expires, COALESCE(u.name, 'Unknown') FROM snippets s
+		LEFT JOIN users u ON s.user_id = u.id
+		WHERE s.expires > LOCALTIMESTAMP AND s.expires <= LOCALTIMESTAMP + INTERVAL '1 day'
+		ORDER BY s.expires ASC`
 
 	rows, err := s.DB.Query(stmt)
 	if err != nil {
@@ -199,7 +202,7 @@ func (s *SnippetModel) GetExpiringToday() ([]*models.Snippet, error) {
 	var snippets []*models.Snippet
 	for rows.Next() {
 		m := &models.Snippet{}
-		err = rows.Scan(&m.ID, &m.Title, &m.Content, &m.Created, &m.Expires)
+		err = rows.Scan(&m.ID, &m.Title, &m.Content, &m.Created, &m.Expires, &m.Author)
 		if err != nil {
 			return nil, err
 		}
